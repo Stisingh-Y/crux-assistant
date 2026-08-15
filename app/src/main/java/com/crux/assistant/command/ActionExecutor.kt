@@ -1,0 +1,115 @@
+package com.crux.assistant.command
+
+import android.content.ActivityNotFoundException
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.BatteryManager
+import android.text.format.DateFormat
+import java.util.Date
+
+/**
+ * ActionExecutor.kt
+ *
+ * Actually performs a Command. Only ever called with a concrete Command instance — never
+ * with raw text — and, for anything under Command.Sensitive, only ever called AFTER
+ * ConfirmationManager has resolved a spoken "yes" (see MainViewModel.kt).
+ *
+ * Every action here uses standard, public Android Intents/APIs. No accessibility
+ * service, no reflection, no device-admin, nothing undocumented.
+ *
+ * Returns a String: what CRUX should say back to the user as a result of the action.
+ */
+class ActionExecutor(private val context: Context) {
+
+    fun execute(command: Command): String = when (command) {
+        Command.OpenGoogle -> openUrl("https://www.google.com")
+        Command.OpenChrome -> openChrome()
+        Command.OpenYouTube -> openYouTube()
+        Command.OpenCalculator -> openCalculator()
+        is Command.Search -> openUrl("https://www.google.com/search?q=${Uri.encode(command.query)}")
+        Command.BatteryStatus -> readBatteryStatus()
+        Command.CurrentTime -> readCurrentTime()
+
+        is Command.Sensitive.SendSms -> sendSms(command)
+
+        is Command.ContactNotFound -> "" // MainViewModel speaks this directly; nothing to execute
+        Command.Unknown -> ""            // MainViewModel speaks the "don't know how" line
+    }
+
+    // --- MVP actions (unchanged behavior, just centralized here) ---
+
+    private fun openUrl(url: String): String {
+        launch(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+        return "Opening that for you."
+    }
+
+    private fun openChrome(): String {
+        val chromeIntent = context.packageManager.getLaunchIntentForPackage("com.android.chrome")
+        return if (chromeIntent != null) {
+            launch(chromeIntent)
+            "Opening Chrome."
+        } else {
+            openUrl("https://www.google.com") // fallback to default browser
+        }
+    }
+
+    private fun openYouTube(): String {
+        val ytIntent = context.packageManager.getLaunchIntentForPackage("com.google.android.youtube")
+        return if (ytIntent != null) {
+            launch(ytIntent)
+            "Opening YouTube."
+        } else {
+            openUrl("https://www.youtube.com") // fallback to website
+        }
+    }
+
+    private fun openCalculator(): String {
+        val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALCULATOR)
+        return try {
+            launch(intent)
+            "Opening the calculator."
+        } catch (e: ActivityNotFoundException) {
+            "I couldn't find a calculator app on this phone."
+        }
+    }
+
+    private fun readBatteryStatus(): String {
+        val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
+        val level = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        return "Your battery is at $level percent."
+    }
+
+    private fun readCurrentTime(): String {
+        val formatted = DateFormat.getTimeFormat(context).format(Date())
+        return "It's $formatted."
+    }
+
+    // --- New: SMS via ACTION_SENDTO (feature 5) ---
+
+    /**
+     * Opens the phone's default SMS app with the recipient and message pre-filled, using
+     * an smsto: URI. This deliberately does NOT call SmsManager.sendTextMessage() and does
+     * NOT require the SEND_SMS permission — the user still has to tap "send" themselves in
+     * their SMS app. That manual tap is intentional: it's a safety layer on top of the
+     * voice confirmation already given, in case speech recognition misheard the name,
+     * number, or the "yes".
+     */
+    private fun sendSms(command: Command.Sensitive.SendSms): String {
+        val uri = Uri.parse("smsto:${command.phoneNumber}")
+        val intent = Intent(Intent.ACTION_SENDTO, uri).apply {
+            putExtra("sms_body", command.message)
+        }
+        return try {
+            launch(intent)
+            "Message ready to send to ${command.contactName}. Just tap send."
+        } catch (e: ActivityNotFoundException) {
+            "I couldn't find a messaging app to send that with."
+        }
+    }
+
+    private fun launch(intent: Intent) {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        context.startActivity(intent)
+    }
+}

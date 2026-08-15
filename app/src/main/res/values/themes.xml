@@ -1,0 +1,7 @@
+<resources>
+    <style name="Theme.Crux" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <item name="colorPrimary">#1A1A2E</item>
+        <item name="colorPrimaryDark">#0F0F1A</item>
+        <item name="colorAccent">#00E5C7</item>
+    </style>
+</resources>

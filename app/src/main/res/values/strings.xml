@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">CRUX</string>
+    <string name="contacts_screen_title">CRUX Contacts</string>
+
+    <!-- Onboarding / permission explanations, shown BEFORE each permission request -->
+    <string name="perm_mic_explainer">CRUX needs the microphone to hear your commands. It only listens when you tap the mic or, if enabled, after you say \"Hey CRUX\".</string>
+    <string name="perm_wakeword_explainer">Always-on listening needs a foreground service with a visible notification, and permission to post that notification. CRUX only reacts to the exact phrase \"Hey CRUX\" — nothing else you say is processed until then.</string>
+
+    <!-- Spoken prompts -->
+    <string name="tts_greeting">Hey, I\'m CRUX. How can I help?</string>
+    <string name="tts_unrecognized">I don\'t know how to do that yet.</string>
+    <string name="tts_cancelled">Cancelled.</string>
+    <string name="tts_contact_not_found">I don\'t have a number saved for %1$s. Add them in CRUX Contacts first.</string>
+    <string name="tts_confirm_send_sms">Send \'%1$s\' to %2$s — do you want me to do that?</string>
+    <string name="tts_didnt_catch_confirmation">I didn\'t catch a yes or no, so I\'m cancelling that.</string>
+
+    <!-- Wake-word notification -->
+    <string name="wakeword_notification_title">CRUX is listening</string>
+    <string name="wakeword_notification_text">Say \"Hey CRUX\" to give a command. Tap to open CRUX.</string>
+    <string name="wakeword_channel_name">CRUX wake word</string>
+
+    <!-- UI -->
+    <string name="mic_button_desc">Tap to speak to CRUX</string>
+    <string name="wakeword_toggle_label">Always listen for \"Hey CRUX\"</string>
+    <string name="manage_contacts_button">Manage CRUX Contacts</string>
+    <string name="add_contact_button">Add</string>
+    <string name="contact_name_hint">Name (e.g. Amma)</string>
+    <string name="contact_number_hint">Phone number</string>
+</resources>

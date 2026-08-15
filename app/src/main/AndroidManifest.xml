@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Needed for both manual mic-tap listening and wake-word capture of the follow-up command. -->
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+
+    <!-- Needed to run the always-on wake-word listener as a foreground service with a
+         persistent notification (Android's required way of doing background mic use). -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MICROPHONE" />
+
+    <!-- Android 13+ requires this to post the "CRUX is listening" notification. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Deliberately NOT requested:
+         - READ_CONTACTS  (feature 4 uses a manual, user-entered mapping instead)
+         - SEND_SMS       (feature 5 uses ACTION_SENDTO so the user taps send themselves) -->
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:theme="@style/Theme.Crux">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- The only non-voice screen in the app: add/edit/remove name -> number mappings. -->
+        <activity
+            android:name=".ui.ContactMappingActivity"
+            android:exported="false"
+            android:label="@string/contacts_screen_title" />
+
+        <!-- Foreground service that keeps the on-device wake-word engine running and shows
+             the required "CRUX is listening" notification. Started only if the user turns
+             wake-word mode ON in settings. -->
+        <service
+            android:name=".voice.WakeWordService"
+            android:exported="false"
+            android:foregroundServiceType="microphone" />
+
+    </application>
+</manifest>
