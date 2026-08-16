@@ -17,6 +17,12 @@ object AppSettings {
     private const val NORMAL_RATE = 1.0f
     private const val SLOW_RATE = 0.75f
 
+    /**
+     * Lowered pitch for a deeper, harder-toned voice (requested style: less "chirpy"
+     * assistant, more deep/robotic). 1.0 would be the engine's natural pitch.
+     */
+    const val VOICE_PITCH = 0.78f
+
     fun isSlowSpeech(context: Context): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
             .getBoolean(KEY_SLOW_SPEECH, false)

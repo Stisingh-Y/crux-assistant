@@ -14,6 +14,13 @@
     <string name="tts_confirm_send_sms">Send \'%1$s\' to %2$s — do you want me to do that?</string>
     <string name="tts_didnt_catch_confirmation">I didn\'t catch a yes or no, so I\'m cancelling that.</string>
 
+    <!-- Time-based greeting spoken right after "Hey CRUX" is detected, before listening for the command -->
+    <string name="greeting_morning">Good morning</string>
+    <string name="greeting_afternoon">Good afternoon</string>
+    <string name="greeting_evening">Good evening</string>
+    <string name="greeting_default">Hello</string>
+    <string name="greeting_how_can_i_help">How can I help?</string>
+
     <!-- Wake-word notification -->
     <string name="wakeword_notification_title">CRUX is listening</string>
     <string name="wakeword_notification_text">Say \"Hey CRUX\" to give a command. Tap to open CRUX.</string>

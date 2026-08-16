@@ -28,10 +28,34 @@ class CommandProcessor(private val contactStore: ContactStore) {
             text.startsWith("search ") -> Command.Search(text.removePrefix("search ").trim())
             text.startsWith("search for ") -> Command.Search(text.removePrefix("search for ").trim())
 
+            text.contains("alarm") || text.contains("remind") -> parseAlarmOrReminder(text)
+
             isSendMessageCommand(text) -> parseSendMessage(text)
 
             else -> Command.Unknown
         }
+    }
+
+    private val timeRegex = Regex("""(\d{1,2})(?::(\d{2}))?\s*(am|pm)?""")
+    private val labelRegex = Regex("""(?:reminder|remind me)\s+to\s+(.+?)(?:\s+at\s+\d|\s*$)""")
+
+    /**
+     * Parses phrases like "set an alarm for 7 am", "set alarm for 7:30 pm", and
+     * "remind me to call Amma at 6 pm". Falls back to Unknown if no recognizable time is
+     * found — this never guesses a time.
+     */
+    private fun parseAlarmOrReminder(text: String): Command {
+        val match = timeRegex.find(text) ?: return Command.Unknown
+        var hour = match.groupValues[1].toIntOrNull() ?: return Command.Unknown
+        val minute = match.groupValues[2].toIntOrNull() ?: 0
+        val meridiem = match.groupValues[3]
+
+        if (meridiem.equals("pm", ignoreCase = true) && hour < 12) hour += 12
+        if (meridiem.equals("am", ignoreCase = true) && hour == 12) hour = 0
+        if (hour !in 0..23 || minute !in 0..59) return Command.Unknown
+
+        val label = labelRegex.find(text)?.groupValues?.get(1)?.trim()?.takeIf { it.isNotBlank() }
+        return Command.SetAlarm(hour, minute, label)
     }
 
     private fun isSendMessageCommand(text: String): Boolean =

@@ -20,22 +20,30 @@ import java.util.UUID
  *    so this is a best-effort name match (most engines, including Google's, name their
  *    voices with "male"/"female" in them) — it silently falls back to the engine default
  *    if no match is found rather than failing.
+ *  - pitch: lower than 1.0 makes the voice sound deeper/harder (CRUX defaults to a lowered
+ *    pitch for a more "assistant-y" tone); 1.0 is the engine's natural pitch.
  */
 class TextToSpeechHelper(
     context: Context,
     private val initialSpeechRate: Float = 1.0f,
     private val preferMaleVoice: Boolean = false,
+    private val pitch: Float = 1.0f,
     private val onReady: () -> Unit = {}
 ) {
 
     private var isReady = false
-    private val tts: TextToSpeech = TextToSpeech(context) { status ->
-        if (status == TextToSpeech.SUCCESS) {
-            isReady = true
-            tts.language = Locale.getDefault()
-            tts.setSpeechRate(initialSpeechRate)
-            if (preferMaleVoice) applyMaleVoiceIfAvailable()
-            onReady()
+    private lateinit var tts: TextToSpeech
+
+    init {
+        tts = TextToSpeech(context) { status ->
+            if (status == TextToSpeech.SUCCESS) {
+                isReady = true
+                tts.language = Locale.getDefault()
+                tts.setSpeechRate(initialSpeechRate)
+                tts.setPitch(pitch)
+                if (preferMaleVoice) applyMaleVoiceIfAvailable()
+                onReady()
+            }
         }
     }
 

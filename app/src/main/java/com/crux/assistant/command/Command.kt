@@ -26,6 +26,7 @@ sealed class Command {
     data class Search(val query: String) : Command()
     data object BatteryStatus : Command()
     data object CurrentTime : Command()
+    data class SetAlarm(val hour: Int, val minute: Int, val label: String?) : Command()
 
     /**
      * Anything in this set requires spoken double-confirmation before ActionExecutor is

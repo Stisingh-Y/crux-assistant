@@ -29,6 +29,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         contactStore = contactStore,
         speechRate = AppSettings.speechRate(application),
         preferMaleVoice = true,
+        pitch = AppSettings.VOICE_PITCH,
         onNeedsFollowUpListening = { startListening() }
     )
 

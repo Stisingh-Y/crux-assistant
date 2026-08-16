@@ -4,6 +4,7 @@ import android.content.Context
 import com.crux.assistant.R
 import com.crux.assistant.data.ContactStore
 import com.crux.assistant.voice.TextToSpeechHelper
+import java.util.Calendar
 
 /**
  * AssistantEngine.kt
@@ -22,6 +23,7 @@ class AssistantEngine(
     private val contactStore: ContactStore,
     speechRate: Float = 1.0f,
     preferMaleVoice: Boolean = false,
+    pitch: Float = 1.0f,
     private val onNeedsFollowUpListening: () -> Unit // "start listening again" callback
 ) {
     private val appContext = context.applicationContext
@@ -31,11 +33,29 @@ class AssistantEngine(
     private val tts = TextToSpeechHelper(
         context = appContext,
         initialSpeechRate = speechRate,
-        preferMaleVoice = preferMaleVoice
+        preferMaleVoice = preferMaleVoice,
+        pitch = pitch
     )
 
     /** Called live when the user flips the Normal/Slow switch on the main screen. */
     fun setSpeechRate(rate: Float) = tts.setSpeechRate(rate)
+
+    /**
+     * Called by WakeWordService right after "Hey CRUX" is detected, BEFORE capturing the
+     * actual command. Speaks a time-of-day greeting + "How can I help?", then triggers
+     * onNeedsFollowUpListening (same follow-up-listen mechanism used after a confirmation
+     * question) so the service starts listening for the real command right after.
+     */
+    fun speakWakeGreeting() {
+        val timeGreeting = when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+            in 5..11 -> appContext.getString(R.string.greeting_morning)
+            in 12..16 -> appContext.getString(R.string.greeting_afternoon)
+            in 17..21 -> appContext.getString(R.string.greeting_evening)
+            else -> appContext.getString(R.string.greeting_default)
+        }
+        val fullGreeting = "$timeGreeting. ${appContext.getString(R.string.greeting_how_can_i_help)}"
+        speak(fullGreeting, thenListenAgain = true)
+    }
 
     /** Entry point: call with whatever SpeechToTextHelper just recognized. */
     suspend fun handleRecognizedSpeech(text: String) {

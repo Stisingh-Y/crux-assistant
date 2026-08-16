@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.os.BatteryManager
+import android.provider.AlarmClock
 import android.text.format.DateFormat
 import java.util.Date
 
@@ -22,14 +23,21 @@ import java.util.Date
  */
 class ActionExecutor(private val context: Context) {
 
+    /** Spoken before every command result, e.g. "Okay boss, opening Google for you." */
+    private val ack = "Okay boss, "
+
     fun execute(command: Command): String = when (command) {
-        Command.OpenGoogle -> openUrl("https://www.google.com")
+        Command.OpenGoogle -> openUrl("https://www.google.com", "Google")
         Command.OpenChrome -> openChrome()
         Command.OpenYouTube -> openYouTube()
         Command.OpenCalculator -> openCalculator()
-        is Command.Search -> openUrl("https://www.google.com/search?q=${Uri.encode(command.query)}")
+        is Command.Search -> openUrl(
+            "https://www.google.com/search?q=${Uri.encode(command.query)}",
+            "a search for ${command.query}"
+        )
         Command.BatteryStatus -> readBatteryStatus()
         Command.CurrentTime -> readCurrentTime()
+        is Command.SetAlarm -> setAlarm(command)
 
         is Command.Sensitive.SendSms -> sendSms(command)
 
@@ -39,18 +47,18 @@ class ActionExecutor(private val context: Context) {
 
     // --- MVP actions (unchanged behavior, just centralized here) ---
 
-    private fun openUrl(url: String): String {
+    private fun openUrl(url: String, spokenLabel: String): String {
         launch(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
-        return "Opening that for you."
+        return "${ack}let's open $spokenLabel."
     }
 
     private fun openChrome(): String {
         val chromeIntent = context.packageManager.getLaunchIntentForPackage("com.android.chrome")
         return if (chromeIntent != null) {
             launch(chromeIntent)
-            "Opening Chrome."
+            "${ack}opening Chrome."
         } else {
-            openUrl("https://www.google.com") // fallback to default browser
+            openUrl("https://www.google.com", "Google") // fallback to default browser
         }
     }
 
@@ -58,9 +66,9 @@ class ActionExecutor(private val context: Context) {
         val ytIntent = context.packageManager.getLaunchIntentForPackage("com.google.android.youtube")
         return if (ytIntent != null) {
             launch(ytIntent)
-            "Opening YouTube."
+            "${ack}opening YouTube."
         } else {
-            openUrl("https://www.youtube.com") // fallback to website
+            openUrl("https://www.youtube.com", "YouTube") // fallback to website
         }
     }
 
@@ -68,7 +76,7 @@ class ActionExecutor(private val context: Context) {
         val intent = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_APP_CALCULATOR)
         return try {
             launch(intent)
-            "Opening the calculator."
+            "${ack}opening the calculator."
         } catch (e: ActivityNotFoundException) {
             "I couldn't find a calculator app on this phone."
         }
@@ -77,12 +85,12 @@ class ActionExecutor(private val context: Context) {
     private fun readBatteryStatus(): String {
         val batteryManager = context.getSystemService(Context.BATTERY_SERVICE) as BatteryManager
         val level = batteryManager.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        return "Your battery is at $level percent."
+        return "${ack}your battery is at $level percent."
     }
 
     private fun readCurrentTime(): String {
         val formatted = DateFormat.getTimeFormat(context).format(Date())
-        return "It's $formatted."
+        return "${ack}it's $formatted."
     }
 
     // --- New: SMS via ACTION_SENDTO (feature 5) ---
@@ -102,9 +110,33 @@ class ActionExecutor(private val context: Context) {
         }
         return try {
             launch(intent)
-            "Message ready to send to ${command.contactName}. Just tap send."
+            "${ack}message ready to send to ${command.contactName}. Just tap send."
         } catch (e: ActivityNotFoundException) {
             "I couldn't find a messaging app to send that with."
+        }
+    }
+
+    // --- New: Alarm / Reminder via standard AlarmClock intent ---
+
+    /**
+     * Opens the phone's default Clock app with the time (and, if given, a label) pre-filled,
+     * using android.provider.AlarmClock.ACTION_SET_ALARM. EXTRA_SKIP_UI is deliberately left
+     * false — same reasoning as the SMS flow: CRUX fills it in, but the user still taps
+     * "Save" in the Clock app themselves, so a misheard time can't silently become a real
+     * alarm.
+     */
+    private fun setAlarm(command: Command.SetAlarm): String {
+        val intent = Intent(AlarmClock.ACTION_SET_ALARM).apply {
+            putExtra(AlarmClock.EXTRA_HOUR, command.hour)
+            putExtra(AlarmClock.EXTRA_MINUTES, command.minute)
+            command.label?.let { putExtra(AlarmClock.EXTRA_MESSAGE, it) }
+            putExtra(AlarmClock.EXTRA_SKIP_UI, false)
+        }
+        return try {
+            launch(intent)
+            "${ack}opening your clock app to set that alarm — just confirm it there."
+        } catch (e: ActivityNotFoundException) {
+            "I couldn't find a clock app on this phone."
         }
     }
 

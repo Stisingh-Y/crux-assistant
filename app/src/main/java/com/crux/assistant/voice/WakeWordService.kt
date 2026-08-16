@@ -29,9 +29,10 @@ import kotlinx.coroutines.launch
  * might be listening.
  *
  * On detecting the wake word, this service:
- *   1. Starts a normal SpeechToTextHelper capture for the actual command.
- *   2. Hands the recognized text to a shared AssistantEngine (same class the manual
- *      mic-tap flow uses), so confirmation logic isn't duplicated.
+ *   1. Speaks a time-of-day greeting ("Good morning. How can I help?") via AssistantEngine.
+ *   2. Starts a normal SpeechToTextHelper capture for the actual command.
+ *   3. Hands the recognized text to the same shared AssistantEngine the manual mic-tap
+ *      flow uses, so confirmation logic isn't duplicated.
  *
  * Only runs at all if the user has turned the wake-word toggle ON in the main screen —
  * see MainViewModel for where this service is started/stopped.
@@ -53,6 +54,7 @@ class WakeWordService : Service() {
             contactStore = ContactStore(this),
             speechRate = AppSettings.speechRate(this),
             preferMaleVoice = true,
+            pitch = AppSettings.VOICE_PITCH,
             onNeedsFollowUpListening = { listenForFollowUp() }
         )
 
@@ -65,20 +67,12 @@ class WakeWordService : Service() {
     }
 
     private fun onWakeWordHeard() {
-        // Pause wake-word listening while capturing the actual command, to avoid
-        // Porcupine and SpeechRecognizer fighting over the microphone at once.
+        // Pause wake-word listening while greeting + capturing the actual command, to avoid
+        // Porcupine and SpeechRecognizer/TTS fighting over the microphone at once.
         wakeWordHelper.stop()
-        speechToText.startListening(
-            onResult = { text ->
-                serviceScope.launch {
-                    assistantEngine.handleRecognizedSpeech(text)
-                    wakeWordHelper.start() // resume listening for the next "Hey CRUX"
-                }
-            },
-            onError = {
-                wakeWordHelper.start()
-            }
-        )
+        // Speaks "Good morning/afternoon/evening. How can I help?" then, once that finishes,
+        // AssistantEngine's onNeedsFollowUpListening callback fires listenForFollowUp() below.
+        assistantEngine.speakWakeGreeting()
     }
 
     private fun listenForFollowUp() {
