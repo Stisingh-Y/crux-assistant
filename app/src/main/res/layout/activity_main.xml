@@ -127,6 +127,18 @@
         android:layout_height="wrap_content"
         android:text="@string/manage_contacts_button"
         android:textColor="@color/accent"
+        app:layout_constraintBottom_toTopOf="@id/batteryOptButton"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <Button
+        android:id="@+id/batteryOptButton"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/battery_optimization_button"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />

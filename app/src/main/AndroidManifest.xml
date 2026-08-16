@@ -12,6 +12,20 @@
     <!-- Android 13+ requires this to post the "CRUX is listening" notification. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- Lets CRUX restart wake-word listening automatically after the phone reboots,
+         instead of requiring the user to reopen the app. Only signals that boot finished
+         — no access to personal data. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Lets CRUX ask the user (via a system settings screen) to exempt it from Doze/
+         battery-saving restrictions, so wake-word listening stays reliable when the screen
+         is off. This only shows a system prompt — no data access. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!-- Some phone brands' Clock apps expect this declared even though AOSP's ACTION_SET_ALARM
+         flow (launching the Clock app's own UI for the user to confirm) doesn't strictly require it. -->
+    <uses-permission android:name="com.android.alarm.permission.SET_ALARM" />
+
     <!-- Deliberately NOT requested:
          - READ_CONTACTS  (feature 4 uses a manual, user-entered mapping instead)
          - SEND_SMS       (feature 5 uses ACTION_SENDTO so the user taps send themselves) -->
@@ -44,6 +58,15 @@
             android:name=".voice.WakeWordService"
             android:exported="false"
             android:foregroundServiceType="microphone" />
+
+        <!-- Restarts wake-word listening after a phone reboot, if it was left on. -->
+        <receiver
+            android:name=".voice.BootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
     </application>
 </manifest>

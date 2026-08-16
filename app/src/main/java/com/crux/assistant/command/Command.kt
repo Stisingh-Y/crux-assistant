@@ -35,7 +35,8 @@ sealed class Command {
      */
     sealed class Sensitive : Command() {
         data class SendSms(val contactName: String, val phoneNumber: String, val message: String) : Sensitive()
-        // Future sensitive commands (e.g. delete a saved contact, make a call) go here.
+        data class MakeCall(val contactName: String, val phoneNumber: String) : Sensitive()
+        // Future sensitive commands (e.g. delete a saved contact) go here.
     }
 
     /** Speech was recognized, but didn't match anything CRUX knows how to do. */

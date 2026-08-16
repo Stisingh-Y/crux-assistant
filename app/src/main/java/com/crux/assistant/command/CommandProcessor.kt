@@ -32,6 +32,8 @@ class CommandProcessor(private val contactStore: ContactStore) {
 
             isSendMessageCommand(text) -> parseSendMessage(text)
 
+            isCallCommand(text) -> parseCall(text)
+
             else -> Command.Unknown
         }
     }
@@ -89,6 +91,30 @@ class CommandProcessor(private val contactStore: ContactStore) {
             contactName = contact.name,
             phoneNumber = contact.phoneNumber,
             message = message
+        )
+    }
+
+    private fun isCallCommand(text: String): Boolean =
+        text.startsWith("call ") || text.startsWith("phone ") || text.startsWith("dial ")
+
+    /**
+     * Parses phrases like "call amma" / "phone amma" / "dial amma" and looks the name up
+     * via ContactStore, same as the SMS flow — no READ_CONTACTS, no guessing a number.
+     */
+    private suspend fun parseCall(text: String): Command {
+        val name = text
+            .removePrefix("call ")
+            .removePrefix("phone ")
+            .removePrefix("dial ")
+            .trim()
+
+        if (name.isBlank()) return Command.Unknown
+
+        val contact = contactStore.findByName(name) ?: return Command.ContactNotFound(name)
+
+        return Command.Sensitive.MakeCall(
+            contactName = contact.name,
+            phoneNumber = contact.phoneNumber
         )
     }
 }

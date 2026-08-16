@@ -12,6 +12,7 @@
     <string name="tts_cancelled">Cancelled.</string>
     <string name="tts_contact_not_found">I don\'t have a number saved for %1$s. Add them in CRUX Contacts first.</string>
     <string name="tts_confirm_send_sms">Send \'%1$s\' to %2$s — do you want me to do that?</string>
+    <string name="tts_confirm_call">Call %1$s — do you want me to do that?</string>
     <string name="tts_didnt_catch_confirmation">I didn\'t catch a yes or no, so I\'m cancelling that.</string>
 
     <!-- Time-based greeting spoken right after "Hey CRUX" is detected, before listening for the command -->
@@ -32,6 +33,8 @@
     <string name="wakeword_toggle_label">Always listen for \"Hey CRUX\"</string>
     <string name="speed_toggle_label">Speak slowly</string>
     <string name="manage_contacts_button">Manage CRUX Contacts</string>
+    <string name="battery_optimization_button">Allow uninterrupted background listening</string>
+    <string name="battery_optimization_already_allowed">Already allowed — CRUX won\'t be paused by battery saving.</string>
     <string name="add_contact_button">Add</string>
     <string name="contact_name_hint">Name (e.g. Amma)</string>
     <string name="contact_number_hint">Phone number</string>

@@ -13,6 +13,7 @@ import android.content.Context
 object AppSettings {
     private const val PREFS_NAME = "crux_prefs"
     private const val KEY_SLOW_SPEECH = "slow_speech_enabled"
+    private const val KEY_WAKE_WORD_ENABLED = "wake_word_enabled"
 
     private const val NORMAL_RATE = 1.0f
     private const val SLOW_RATE = 0.75f
@@ -22,6 +23,18 @@ object AppSettings {
      * assistant, more deep/robotic). 1.0 would be the engine's natural pitch.
      */
     const val VOICE_PITCH = 0.78f
+
+    fun isWakeWordEnabled(context: Context): Boolean =
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            // Defaults to true: "Hey CRUX" listening is on unless the user explicitly turns it off.
+            .getBoolean(KEY_WAKE_WORD_ENABLED, true)
+
+    fun setWakeWordEnabled(context: Context, enabled: Boolean) {
+        context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .edit()
+            .putBoolean(KEY_WAKE_WORD_ENABLED, enabled)
+            .apply()
+    }
 
     fun isSlowSpeech(context: Context): Boolean =
         context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)

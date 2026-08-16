@@ -40,6 +40,7 @@ class ActionExecutor(private val context: Context) {
         is Command.SetAlarm -> setAlarm(command)
 
         is Command.Sensitive.SendSms -> sendSms(command)
+        is Command.Sensitive.MakeCall -> makeCall(command)
 
         is Command.ContactNotFound -> "" // MainViewModel speaks this directly; nothing to execute
         Command.Unknown -> ""            // MainViewModel speaks the "don't know how" line
@@ -116,6 +117,26 @@ class ActionExecutor(private val context: Context) {
         }
     }
 
+    /**
+     * Opens the Phone app's dialer with the number pre-filled, using ACTION_DIAL — this
+     * deliberately does NOT use ACTION_CALL (which requires the sensitive CALL_PHONE
+     * permission and would place the call with no further action from the user). CRUX
+     * fills in the number; the user still taps the call button themselves, same
+     * manual-final-step safety pattern as SMS.
+     */
+    private fun makeCall(command: Command.Sensitive.MakeCall): String {
+        val uri = Uri.parse("tel:${command.phoneNumber}")
+        val intent = Intent(Intent.ACTION_DIAL, uri)
+        return try {
+            launch(intent)
+            "${ack}dialing ${command.contactName} — just tap call."
+        } catch (e: ActivityNotFoundException) {
+            "I couldn't find a phone app on this device."
+        } catch (e: SecurityException) {
+            "I don't have permission to open the dialer on this phone."
+        }
+    }
+
     // --- New: Alarm / Reminder via standard AlarmClock intent ---
 
     /**
@@ -137,6 +158,8 @@ class ActionExecutor(private val context: Context) {
             "${ack}opening your clock app to set that alarm — just confirm it there."
         } catch (e: ActivityNotFoundException) {
             "I couldn't find a clock app on this phone."
+        } catch (e: SecurityException) {
+            "I don't have permission to set an alarm on this phone."
         }
     }
 

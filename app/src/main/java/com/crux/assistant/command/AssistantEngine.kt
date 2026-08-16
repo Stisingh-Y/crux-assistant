@@ -71,10 +71,23 @@ class AssistantEngine(
             Command.Unknown ->
                 speak(appContext.getString(R.string.tts_unrecognized))
             else -> {
-                val result = actionExecutor.execute(command)
+                val result = executeSafely(command)
                 speak(result)
             }
         }
+    }
+
+    /**
+     * Runs ActionExecutor.execute() but never lets an unexpected exception crash the app —
+     * any command bug (this one or a future one) becomes a spoken message instead of a
+     * force-close. Expected, per-command failure cases (missing app, permission issues,
+     * etc.) are still handled with specific messages inside ActionExecutor itself; this is
+     * only the last-resort catch-all.
+     */
+    private fun executeSafely(command: Command): String = try {
+        actionExecutor.execute(command)
+    } catch (e: Exception) {
+        "Sorry, something went wrong trying to do that."
     }
 
     private fun askForConfirmation(command: Command.Sensitive) {
@@ -82,6 +95,8 @@ class AssistantEngine(
         val question = when (command) {
             is Command.Sensitive.SendSms ->
                 appContext.getString(R.string.tts_confirm_send_sms, command.message, command.contactName)
+            is Command.Sensitive.MakeCall ->
+                appContext.getString(R.string.tts_confirm_call, command.contactName)
         }
         // After asking, CRUX needs to hear the answer -> trigger another listening pass.
         speak(question, thenListenAgain = true)
@@ -90,7 +105,7 @@ class AssistantEngine(
     private fun handleConfirmationAnswer(text: String) {
         when (val resolution = confirmationManager.resolve(text)) {
             is ConfirmationManager.Resolution.Confirmed -> {
-                val result = actionExecutor.execute(resolution.command)
+                val result = executeSafely(resolution.command)
                 speak(result)
             }
             ConfirmationManager.Resolution.Cancelled ->
