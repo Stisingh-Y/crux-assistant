@@ -29,13 +29,17 @@ class TextToSpeechHelper(
 ) {
 
     private var isReady = false
-    private val tts: TextToSpeech = TextToSpeech(context) { status ->
+    private lateinit var tts: TextToSpeech
+
+    init {
+        tts = TextToSpeech(context) { status ->
         if (status == TextToSpeech.SUCCESS) {
             isReady = true
             tts.language = Locale.getDefault()
             tts.setSpeechRate(initialSpeechRate)
             if (preferMaleVoice) applyMaleVoiceIfAvailable()
             onReady()
+        }
         }
     }
 
