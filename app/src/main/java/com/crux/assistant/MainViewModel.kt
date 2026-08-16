@@ -4,6 +4,7 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.crux.assistant.command.AssistantEngine
+import com.crux.assistant.data.AppSettings
 import com.crux.assistant.data.ContactStore
 import com.crux.assistant.voice.SpeechToTextHelper
 import kotlinx.coroutines.launch
@@ -26,10 +27,18 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     val engine = AssistantEngine(
         context = application,
         contactStore = contactStore,
+        speechRate = AppSettings.speechRate(application),
+        preferMaleVoice = true,
         onNeedsFollowUpListening = { startListening() }
     )
 
     var onStatusUpdate: ((String) -> Unit)? = null
+
+    /** Called from MainActivity when the user flips the Normal/Slow speech switch. */
+    fun updateSpeechRate(slow: Boolean) {
+        AppSettings.setSlowSpeech(getApplication(), slow)
+        engine.setSpeechRate(AppSettings.speechRate(getApplication()))
+    }
 
     fun startListening() {
         speechToText.startListening(

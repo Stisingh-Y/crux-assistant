@@ -20,13 +20,22 @@ import com.crux.assistant.voice.TextToSpeechHelper
 class AssistantEngine(
     context: Context,
     private val contactStore: ContactStore,
+    speechRate: Float = 1.0f,
+    preferMaleVoice: Boolean = false,
     private val onNeedsFollowUpListening: () -> Unit // "start listening again" callback
 ) {
     private val appContext = context.applicationContext
     private val commandProcessor = CommandProcessor(contactStore)
     private val actionExecutor = ActionExecutor(appContext)
     private val confirmationManager = ConfirmationManager()
-    private val tts = TextToSpeechHelper(appContext)
+    private val tts = TextToSpeechHelper(
+        context = appContext,
+        initialSpeechRate = speechRate,
+        preferMaleVoice = preferMaleVoice
+    )
+
+    /** Called live when the user flips the Normal/Slow switch on the main screen. */
+    fun setSpeechRate(rate: Float) = tts.setSpeechRate(rate)
 
     /** Entry point: call with whatever SpeechToTextHelper just recognized. */
     suspend fun handleRecognizedSpeech(text: String) {

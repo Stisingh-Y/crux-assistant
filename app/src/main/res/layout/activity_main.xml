@@ -3,43 +3,122 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/app_bg"
     android:padding="24dp">
 
-    <!-- What CRUX heard / said, so the interaction isn't purely invisible -->
-    <TextView
-        android:id="@+id/statusText"
+    <!-- Conversation-style status card: what CRUX heard / said -->
+    <LinearLayout
+        android:id="@+id/statusCard"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/tts_greeting"
-        android:textSize="18sp"
-        android:gravity="center"
+        android:background="@drawable/bg_status_card"
+        android:orientation="vertical"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintVertical_bias="0.3" />
+        android:layout_marginTop="32dp">
 
-    <!-- Manual fallback / toggle: works whether or not wake-word mode is on -->
-    <ImageButton
-        android:id="@+id/micButton"
-        android:layout_width="96dp"
-        android:layout_height="96dp"
-        android:background="@drawable/bg_mic_button"
-        android:src="@android:drawable/ic_btn_speak_now"
-        android:contentDescription="@string/mic_button_desc"
-        app:layout_constraintBottom_toTopOf="@id/wakeWordToggle"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CRUX"
+            android:textColor="@color/text_secondary"
+            android:textSize="12sp"
+            android:letterSpacing="0.15"
+            android:layout_marginBottom="6dp" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/tts_greeting"
+            android:textColor="@color/text_primary"
+            android:textSize="17sp"
+            android:lineSpacingExtra="4dp" />
+    </LinearLayout>
+
+    <!-- Pulsing ring shown while CRUX is actively listening; invisible otherwise -->
+    <View
+        android:id="@+id/pulseRing"
+        android:layout_width="128dp"
+        android:layout_height="128dp"
+        android:background="@drawable/bg_pulse_ring"
+        android:alpha="0"
+        app:layout_constraintBottom_toTopOf="@id/togglesGroup"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintVertical_bias="0.5" />
 
-    <com.google.android.material.switchmaterial.SwitchMaterial
-        android:id="@+id/wakeWordToggle"
-        android:layout_width="wrap_content"
+    <ImageButton
+        android:id="@+id/micButton"
+        android:layout_width="88dp"
+        android:layout_height="88dp"
+        android:background="@drawable/bg_mic_button"
+        android:src="@android:drawable/ic_btn_speak_now"
+        android:contentDescription="@string/mic_button_desc"
+        app:layout_constraintBottom_toBottomOf="@id/pulseRing"
+        app:layout_constraintTop_toTopOf="@id/pulseRing"
+        app:layout_constraintStart_toStartOf="@id/pulseRing"
+        app:layout_constraintEnd_toEndOf="@id/pulseRing" />
+
+    <LinearLayout
+        android:id="@+id/togglesGroup"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:text="@string/wakeword_toggle_label"
+        android:orientation="vertical"
+        android:background="@drawable/bg_status_card"
         app:layout_constraintBottom_toTopOf="@id/manageContactsButton"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="20dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/wakeword_toggle_label"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/wakeWordToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#22FFFFFF"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="14dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/speed_toggle_label"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+
+            <com.google.android.material.switchmaterial.SwitchMaterial
+                android:id="@+id/speedToggle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+    </LinearLayout>
 
     <Button
         android:id="@+id/manageContactsButton"
@@ -47,9 +126,9 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/manage_contacts_button"
+        android:textColor="@color/accent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="16dp" />
+        app:layout_constraintEnd_toEndOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

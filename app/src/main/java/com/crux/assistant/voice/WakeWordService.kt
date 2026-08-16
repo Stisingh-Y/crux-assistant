@@ -12,6 +12,7 @@ import androidx.core.app.NotificationCompat
 import com.crux.assistant.MainActivity
 import com.crux.assistant.R
 import com.crux.assistant.command.AssistantEngine
+import com.crux.assistant.data.AppSettings
 import com.crux.assistant.data.ContactStore
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -50,6 +51,8 @@ class WakeWordService : Service() {
         assistantEngine = AssistantEngine(
             context = this,
             contactStore = ContactStore(this),
+            speechRate = AppSettings.speechRate(this),
+            preferMaleVoice = true,
             onNeedsFollowUpListening = { listenForFollowUp() }
         )
 

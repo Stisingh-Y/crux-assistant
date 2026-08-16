@@ -1,16 +1,19 @@
 package com.crux.assistant
 
 import android.Manifest
+import android.animation.ObjectAnimator
+import android.animation.AnimatorSet
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.view.animation.LinearInterpolator
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModelProvider
-import com.crux.assistant.command.Command
+import com.crux.assistant.data.AppSettings
 import com.crux.assistant.databinding.ActivityMainBinding
 import com.crux.assistant.ui.ContactMappingActivity
 import com.crux.assistant.voice.WakeWordService
@@ -18,8 +21,9 @@ import com.crux.assistant.voice.WakeWordService
 /**
  * MainActivity.kt
  *
- * The one screen of CRUX: a status line, a mic button (manual fallback/toggle, always
- * works), the "always listen for Hey CRUX" switch, and a button to the contacts screen.
+ * The one screen of CRUX: a status card, a mic button with a pulsing ring while CRUX is
+ * listening, the "always listen for Hey CRUX" switch, a "speak slowly" switch, and a
+ * button into the contacts screen.
  *
  * Permission requests happen here, one at a time, each preceded by an in-app explanation
  * (see strings.xml perm_*_explainer), matching the MVP's existing pattern.
@@ -29,10 +33,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var viewModel: MainViewModel
     private lateinit var prefs: SharedPreferences
+    private var pulseAnimator: AnimatorSet? = null
 
     private val micPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
-    ) { granted -> if (granted) viewModel.startListening() }
+    ) { granted -> if (granted) startListeningWithPulse() }
 
     private val wakeWordPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -46,7 +51,10 @@ class MainActivity : AppCompatActivity() {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
         prefs = getSharedPreferences("crux_prefs", MODE_PRIVATE)
 
-        viewModel.onStatusUpdate = { text -> binding.statusText.text = text }
+        viewModel.onStatusUpdate = { text ->
+            binding.statusText.text = text
+            stopPulse()
+        }
 
         binding.micButton.setOnClickListener { onMicTapped() }
 
@@ -54,26 +62,70 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, ContactMappingActivity::class.java))
         }
 
+        setupWakeWordToggle()
+        setupSpeedToggle()
+    }
+
+    private fun setupWakeWordToggle() {
         binding.wakeWordToggle.isChecked = prefs.getBoolean(KEY_WAKE_WORD_ENABLED, false)
         binding.wakeWordToggle.setOnCheckedChangeListener { _, isChecked ->
             prefs.edit().putBoolean(KEY_WAKE_WORD_ENABLED, isChecked).apply()
             if (isChecked) requestWakeWordPermissionsThenStart() else stopWakeWordService()
         }
-
-        // Resume wake-word service across app restarts if the user left it on.
         if (binding.wakeWordToggle.isChecked) requestWakeWordPermissionsThenStart()
+    }
+
+    private fun setupSpeedToggle() {
+        binding.speedToggle.isChecked = AppSettings.isSlowSpeech(this)
+        binding.speedToggle.setOnCheckedChangeListener { _, isChecked ->
+            viewModel.updateSpeechRate(isChecked)
+        }
     }
 
     private fun onMicTapped() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
             == PackageManager.PERMISSION_GRANTED
         ) {
-            viewModel.startListening()
+            startListeningWithPulse()
         } else {
-            // In-app explanation shown via the status text before the system dialog appears.
             binding.statusText.text = getString(R.string.perm_mic_explainer)
             micPermissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
         }
+    }
+
+    private fun startListeningWithPulse() {
+        binding.statusText.text = getString(R.string.listening_status)
+        startPulse()
+        viewModel.startListening()
+    }
+
+    /** Repeating scale + fade ring animation shown behind the mic button while listening. */
+    private fun startPulse() {
+        stopPulse()
+        val ring = binding.pulseRing
+        ring.scaleX = 1f
+        ring.scaleY = 1f
+        ring.alpha = 0.8f
+
+        val scaleX = ObjectAnimator.ofFloat(ring, "scaleX", 1f, 1.6f).apply {
+            duration = 900; repeatCount = ObjectAnimator.INFINITE; interpolator = LinearInterpolator()
+        }
+        val scaleY = ObjectAnimator.ofFloat(ring, "scaleY", 1f, 1.6f).apply {
+            duration = 900; repeatCount = ObjectAnimator.INFINITE; interpolator = LinearInterpolator()
+        }
+        val fade = ObjectAnimator.ofFloat(ring, "alpha", 0.8f, 0f).apply {
+            duration = 900; repeatCount = ObjectAnimator.INFINITE; interpolator = LinearInterpolator()
+        }
+        pulseAnimator = AnimatorSet().apply {
+            playTogether(scaleX, scaleY, fade)
+            start()
+        }
+    }
+
+    private fun stopPulse() {
+        pulseAnimator?.cancel()
+        pulseAnimator = null
+        binding.pulseRing.alpha = 0f
     }
 
     private fun requestWakeWordPermissionsThenStart() {
@@ -100,6 +152,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun stopWakeWordService() {
         stopService(Intent(this, WakeWordService::class.java))
+    }
+
+    override fun onDestroy() {
+        stopPulse()
+        super.onDestroy()
     }
 
     private companion object {

@@ -21,7 +21,9 @@
 
     <!-- UI -->
     <string name="mic_button_desc">Tap to speak to CRUX</string>
+    <string name="listening_status">Listening…</string>
     <string name="wakeword_toggle_label">Always listen for \"Hey CRUX\"</string>
+    <string name="speed_toggle_label">Speak slowly</string>
     <string name="manage_contacts_button">Manage CRUX Contacts</string>
     <string name="add_contact_button">Add</string>
     <string name="contact_name_hint">Name (e.g. Amma)</string>
